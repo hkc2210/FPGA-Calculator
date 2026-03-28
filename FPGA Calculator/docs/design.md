@@ -30,7 +30,7 @@ An array is used in the storage module to hold input operands.
 
 This structure makes the design more scalable if more operands are added later.
 
-Loops are not heavily used in the current skeleton code, but they can be applied for initialization or repeated processing in future extensions.
+Loops are not heavily used in the current code, but they can be applied for initialization or repeated processing in future extensions.
 
 Depending on the design purpose, these loops may be placed in either `always_comb` or `always_ff`.
 
@@ -39,6 +39,8 @@ Depending on the design purpose, these loops may be placed in either `always_com
 ## 4. Integration Plan
 
 First, an input value is written into the storage module when `load_en` is enabled.
+
+An internal write address is used to load operands sequentially into the storage block.
 
 Next, the stored operands are sent to the `alu`.
 
@@ -50,101 +52,29 @@ The `reset` signal clears the output when needed.
 
 ---
 
-## 5. Skeleton Code
+## 5. Source Files
 
-### ALU Module
+The SystemVerilog source files for this design are included in the `src` folder:
 
-```systemverilog
-module alu #(parameter WIDTH = 16) (
-    input  logic [WIDTH-1:0] a,
-    input  logic [WIDTH-1:0] b,
-    input  logic [1:0] opcode,
-    output logic [WIDTH-1:0] result,
-    output logic error
-);
+- `src/alu.sv`
+- `src/storage.sv`
+- `src/fpga_calculator.sv`
+- `src/tb_fpga_calculator.sv`
 
-always_comb begin
-    result = '0;
-    error  = 1'b0;
+---
 
-    case (opcode)
-        2'b00: result = a + b;
-        2'b01: result = a - b;
-        2'b10: result = a * b;
-        2'b11: begin
-            if (b != 0)
-                result = a / b;
-            else
-                error = 1'b1;
-        end
-        default: result = '0;
-    endcase
-end
+## 6. Simulation Results
 
-endmodule
-```
+The design was verified using a SystemVerilog testbench and Verilator.
 
-### Storage Module
+The simulation results are summarized below:
 
-```systemverilog
-module storage #(parameter WIDTH = 16, DEPTH = 4) (
-    input  logic clk,
-    input  logic we,
-    input  logic [$clog2(DEPTH)-1:0] addr,
-    input  logic [WIDTH-1:0] data_in,
-    output logic [WIDTH-1:0] data_out [DEPTH]
-);
+- Addition: `10 + 5 = 15`
+- Subtraction: `10 - 5 = 5`
+- Multiplication: `10 * 5 = 50`
+- Division: `10 / 5 = 2`
+- Division by zero: `final_result = 0`, `error = 1`
 
-logic [WIDTH-1:0] mem [DEPTH];
+These results show that the calculator performs the four basic arithmetic operations correctly.
 
-always_ff @(posedge clk) begin
-    if (we)
-        mem[addr] <= data_in;
-end
-
-assign data_out = mem;
-
-endmodule
-```
-
-### Top-Level Module
-
-```systemverilog
-module fpga_calculator #(parameter WIDTH = 16, DEPTH = 2) (
-    input  logic clk,
-    input  logic reset,
-    input  logic [WIDTH-1:0] input_val,
-    input  logic [1:0] op_select,
-    input  logic load_en,
-    output logic [WIDTH-1:0] final_result
-);
-
-logic [WIDTH-1:0] operands [DEPTH];
-logic [WIDTH-1:0] calc_res;
-logic div_error;
-
-storage #(.WIDTH(WIDTH), .DEPTH(DEPTH)) input_buffer (
-    .clk(clk),
-    .we(load_en),
-    .addr(0),
-    .data_in(input_val),
-    .data_out(operands)
-);
-
-alu #(.WIDTH(WIDTH)) core_alu (
-    .a(operands[0]),
-    .b(operands[1]),
-    .opcode(op_select),
-    .result(calc_res),
-    .error(div_error)
-);
-
-always_ff @(posedge clk or posedge reset) begin
-    if (reset)
-        final_result <= '0;
-    else
-        final_result <= calc_res;
-end
-
-endmodule
-```
+For the division-by-zero case, the ALU keeps the result at `0` and raises the error flag, which matches the intended design behavior.
