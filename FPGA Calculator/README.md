@@ -54,7 +54,7 @@ Integrates all components and manages data flow.
 - Registers final output
 
 ```systemverilog
-alway_ff @(posedge clk or posedge reset) begin
+always_ff @(posedge clk or posedge reset) begin
     if (reset)
         final_result <= '0;
     else
