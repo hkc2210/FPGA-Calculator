@@ -74,18 +74,8 @@ The design was verified using a SystemVerilog testbench and Verilator.
 
 Full design plan:
 
-`docs/design.md`
+[Design Plan](docs/design.md)
 
----
-
-## Source Files
-
-SystemVerilog source files are included in the `src` folder:
-
-- `src/alu.sv`
-- `src/storage.sv`
-- `src/fpga_calculator.sv`
-- `src/tb_fpga_calculator.sv`
 
 ---
 
@@ -110,4 +100,3 @@ SystemVerilog source files are included in the `src` folder:
 - SystemVerilog
 - Verilator
 - Intel Quartus Prime 25.1std
-- VS Code
